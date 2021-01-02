@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         WindowStyle="None"
         ResizeMode="NoResize"
-        Title="About" Height="183.05" Width="349">
+        Title="About" Height="196.05" Width="349">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -17,7 +17,7 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid MouseDown="Grid_MouseDown" Margin="0,0,10,0">
+    <Grid MouseDown="Grid_MouseDown" Margin="10,10,0,10">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="332*"/>
             <ColumnDefinition Width="9*"/>
@@ -27,11 +27,11 @@
         <Label Content="Developed by s1abmmo" HorizontalAlignment="Left" Margin="10,36,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="139"/>
         <Label Content="Theo dõi ở topic MMO4ME" HorizontalAlignment="Left" Margin="10,69,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="154"/>
 
-        <TextBlock Margin="30,95,0,0" Height="34" VerticalAlignment="Top" HorizontalAlignment="Left" Width="292">           
+        <TextBlock Margin="30,95,0,0" Height="18" VerticalAlignment="Top" HorizontalAlignment="Left" Width="292">           
             <Hyperlink NavigateUri="https://mmo4me.com/threads/dropz-tool.419094/" RequestNavigate="Hyperlink_RequestNavigate">
                 https://mmo4me.com/threads/dropz-tool.419094/
             </Hyperlink>
         </TextBlock>
-        <Button Content="Close" Style="{StaticResource ButtonBlue}" Margin="247,139,10,10" Click="Button_Click"/>
+        <Button Content="Close" Style="{StaticResource ButtonBlue}" Margin="247,134,10,10" Click="Button_Click"/>
     </Grid>
 </Window>

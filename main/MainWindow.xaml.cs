@@ -40,7 +40,7 @@ namespace main
             {
                 if (!items.Any(r => r.Id == a))
                 {
-                    items.Add(new DropzWindow() { Id = a, Description = a.ToString(), Start = false, Status = "---",UserAgent= "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",Visible=false,AutoClaimRunning=false,Proxytype=ProxyType.none,Host=null,Port=null });
+                    items.Add(new DropzWindow() { Id = a, Description = a.ToString(), Start = false, Status = "---",UserAgent= "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",Visible=false,AutoClaimRunning=false,Proxytype=ProxyType.none,Host=null,Port=null,AmountWithdraw=8000,Width=800,Height=600 });
                     lvUsers.Items.Refresh();
                     break;
                 }
@@ -63,6 +63,9 @@ namespace main
                     string Arguments = Uid + " ";
                     Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(items[IndexDropzWindow].UserAgent)) + " ";
                     Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(items[IndexDropzWindow].Proxytype.ToString()+"|"+ items[IndexDropzWindow].Host + "|"+ items[IndexDropzWindow].Port)) + " ";
+                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].AmountWithdraw))) + " ";
+                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].Width))) + " ";
+                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].Height))) + " ";
                     p.StartInfo.Arguments = Arguments;
                     //MessageBox.Show(Arguments);
                     if (!items[IndexDropzWindow].Visible)
@@ -348,6 +351,9 @@ namespace main
         public bool Visible { get; set; }
         public ProxyType Proxytype { get; set; }
         public bool Hcaptcha { get; set; }
+        public int AmountWithdraw { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
     }
     public enum ProxyType
     {

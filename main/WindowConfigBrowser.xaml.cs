@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.Text.RegularExpressions;
 
 namespace main
 {
@@ -50,6 +51,9 @@ namespace main
             MainWindow.items[IndexDropzWindow].UserAgent = TextBoxUserAgent.Text;
             MainWindow.items[IndexDropzWindow].Host = Host.Text;
             MainWindow.items[IndexDropzWindow].Port = Port.Text;
+            MainWindow.items[IndexDropzWindow].AmountWithdraw = Convert.ToInt32(amountwithdraw.Text);
+            MainWindow.items[IndexDropzWindow].Width = Convert.ToInt32(width.Text);
+            MainWindow.items[IndexDropzWindow].Height = Convert.ToInt32(height.Text);
             if (None.IsChecked.Value)
             {
                 MainWindow.items[IndexDropzWindow].Proxytype = ProxyType.none;
@@ -70,6 +74,12 @@ namespace main
         {
             if (e.ChangedButton == MouseButton.Left)
                 this.DragMove();
+        }
+
+        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
+        {
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
         }
     }
     public class ComparisonConverter : IValueConverter

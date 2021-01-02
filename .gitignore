@@ -1,0 +1,6 @@
+dropzwindow/bin/*
+dropzwindow/obj/*
+main/bin/*
+main/obj/*
+.vs/*
+packages/*
