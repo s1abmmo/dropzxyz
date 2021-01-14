@@ -51,7 +51,6 @@ namespace main
             MainWindow.items[IndexDropzWindow].UserAgent = TextBoxUserAgent.Text;
             MainWindow.items[IndexDropzWindow].Host = Host.Text;
             MainWindow.items[IndexDropzWindow].Port = Port.Text;
-            MainWindow.items[IndexDropzWindow].AmountWithdraw = Convert.ToInt32(amountwithdraw.Text);
             MainWindow.items[IndexDropzWindow].Width = Convert.ToInt32(width.Text);
             MainWindow.items[IndexDropzWindow].Height = Convert.ToInt32(height.Text);
             if (None.IsChecked.Value)
@@ -62,6 +61,15 @@ namespace main
             {
                 MainWindow.items[IndexDropzWindow].Proxytype = ProxyType.socks5;
             }
+            if (hidepopup.IsChecked.Value)
+            {
+                MainWindow.items[IndexDropzWindow].HidePopup = true;
+            }
+            else
+            {
+                MainWindow.items[IndexDropzWindow].HidePopup = false;
+            }
+            MainWindow.items[IndexDropzWindow].DelayClosePopup = Convert.ToInt32(delayclosepopup.Text);
             this.Close();
         }
 

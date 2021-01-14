@@ -31,6 +31,16 @@ namespace main
             LoadConfigs();
             lvUsers.ItemsSource = items;
             lvUsers.Items.Refresh();
+            DirectoryInfo di = new DirectoryInfo(System.AppDomain.CurrentDomain.BaseDirectory + "\\Auto");
+            bool add = false;
+            foreach (FileInfo file in di.GetFiles("*"))
+            {
+                ComboBox1.Items.Add(file.Name);
+                if (!add) {
+                    ComboBox1.Text = file.Name;
+                    add = true;
+                }
+            }
         }
         public static List<DropzWindow> items = new List<DropzWindow>();
 
@@ -40,18 +50,26 @@ namespace main
             {
                 if (!items.Any(r => r.Id == a))
                 {
-                    items.Add(new DropzWindow() { Id = a, Description = a.ToString(), Start = false, Status = "---",UserAgent= "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36",Visible=false,AutoClaimRunning=false,Proxytype=ProxyType.none,Host=null,Port=null,AmountWithdraw=8000,Width=800,Height=600 });
-                    lvUsers.Items.Refresh();
+                    if (ComboBox1.Text != null && ComboBox1.Text != "")
+                    {
+                        items.Add(new DropzWindow() { Id = a, Description = a.ToString(), Script = ComboBox1.Text, Start = false, Status = "---", UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36", Visible = false, AutoRunning = false, Proxytype = ProxyType.none, Host = null, Port = null, Width = 800, Height = 600, ButtonReady = true ,HidePopup=true,DelayClosePopup=6000});
+                        lvUsers.Items.Refresh();
+                    }
                     break;
                 }
             }
         }
+
+        private List<Thread> ListThread;
+
         private void StartAndStop(object sender, RoutedEventArgs e)
         {
             Button b = sender as Button;
             StackPanel s = b.Parent as StackPanel;
             string Uid = s.Uid;
             int IndexDropzWindow = items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
+            items[IndexDropzWindow].ButtonReady = false;
+            RefreshListView();
             //MessageBox.Show(IndexDropzWindow+Uid + items[IndexDropzWindow].Status);
             //MessageBox.Show(items[IndexDropzWindow].Start.ToString());
             if (!items[IndexDropzWindow].Start)
@@ -63,9 +81,11 @@ namespace main
                     string Arguments = Uid + " ";
                     Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(items[IndexDropzWindow].UserAgent)) + " ";
                     Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(items[IndexDropzWindow].Proxytype.ToString()+"|"+ items[IndexDropzWindow].Host + "|"+ items[IndexDropzWindow].Port)) + " ";
-                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].AmountWithdraw))) + " ";
                     Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].Width))) + " ";
                     Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].Height))) + " ";
+                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].Script))) + " ";
+                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].HidePopup))) + " ";
+                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].DelayClosePopup))) + " ";
                     p.StartInfo.Arguments = Arguments;
                     //MessageBox.Show(Arguments);
                     if (!items[IndexDropzWindow].Visible)
@@ -79,14 +99,15 @@ namespace main
                     if (new Pipe().SendAndReceive(ppsv, "Start")=="OK")
                     {
                         items[IndexDropzWindow].Start = true;
+                        items[IndexDropzWindow].ButtonReady = true;
                         RefreshListView();
-                        while (true)
+                        while (items[IndexDropzWindow].Start)
                         {
                             Thread.Sleep(250);
 
-                            if (items[IndexDropzWindow].CommandSend == null && items[IndexDropzWindow].AutoClaimRunning == true)
+                            if (items[IndexDropzWindow].CommandSend == null && items[IndexDropzWindow].AutoRunning == true)
                             {
-                                items[IndexDropzWindow].CommandSend = "CheckBalance";
+                                items[IndexDropzWindow].CommandSend = "CheckData";
                             }
 
 
@@ -95,41 +116,47 @@ namespace main
 
                                 items[IndexDropzWindow].DataReceived= new Pipe().SendAndReceive(ppsv, items[IndexDropzWindow].CommandSend);
 
-                                if (items[IndexDropzWindow].CommandSend == "AutoClaim")
+                                if (items[IndexDropzWindow].CommandSend == "Auto")
                                 {
                                     if (items[IndexDropzWindow].DataReceived == "OK")
                                     {
-                                        items[IndexDropzWindow].AutoClaimRunning = true;
+                                        items[IndexDropzWindow].ButtonReady = true;
+                                        items[IndexDropzWindow].AutoRunning = true;
                                         RefreshListView();
                                     }
                                 }
-                                else if (items[IndexDropzWindow].CommandSend == "StopAutoClaim")
+                                else if (items[IndexDropzWindow].CommandSend == "StopAuto")
                                 {
                                     if (items[IndexDropzWindow].DataReceived == "OK")
                                     {
-                                        items[IndexDropzWindow].AutoClaimRunning = false;
+                                        items[IndexDropzWindow].ButtonReady = true;
+                                        items[IndexDropzWindow].AutoRunning = false;
                                         RefreshListView();
                                     }
                                 }
-                                else if (items[IndexDropzWindow].CommandSend == "CheckBalance")
+                                else if (items[IndexDropzWindow].CommandSend == "CheckData")
                                 {
                                     string[] result = items[IndexDropzWindow].DataReceived.Split('|');
-                                    if (result[0] == "True")
-                                    {
-                                        items[IndexDropzWindow].Balance = result[1];
-                                        if (result[2] == "True")
-                                            items[IndexDropzWindow].Hcaptcha = true;
-                                        else { items[IndexDropzWindow].Hcaptcha = false; }
-                                        RefreshListView();
-                                    }
+                                    items[IndexDropzWindow].Response = result[0];
+                                    if (Convert.ToBoolean(result[1]) == true)
+                                        items[IndexDropzWindow].Captcha = true;
+                                    else { items[IndexDropzWindow].Captcha = false; }
+                                    RefreshListView();
                                 }else if(items[IndexDropzWindow].CommandSend == "Stop")
                                 {
                                     //MessageBox.Show("stop");
                                     if (items[IndexDropzWindow].DataReceived == "OK")
                                     {
+                                        items[IndexDropzWindow].ButtonReady = true;
+                                        try
+                                        {
+                                            Process.GetProcessById(items[IndexDropzWindow].IdProcess).Kill();
+                                            Process.GetProcessById(items[IndexDropzWindow].IdProcess).Dispose();
+                                        }
+                                        catch { }
                                         new Pipe().Disconnect(ppsv);
                                         items[IndexDropzWindow].Start = false;
-                                        items[IndexDropzWindow].AutoClaimRunning = false;
+                                        items[IndexDropzWindow].AutoRunning = false;
                                         items[IndexDropzWindow].Visible = false;
                                         RefreshListView();
                                     }
@@ -139,6 +166,7 @@ namespace main
                                     //MessageBox.Show("stop");
                                     if (items[IndexDropzWindow].DataReceived == "OK")
                                     {
+                                        items[IndexDropzWindow].ButtonReady = true;
                                         items[IndexDropzWindow].Visible = false;
                                         RefreshListView();
                                     }
@@ -148,6 +176,7 @@ namespace main
                                     //MessageBox.Show("stop");
                                     if (items[IndexDropzWindow].DataReceived == "OK")
                                     {
+                                        items[IndexDropzWindow].ButtonReady = true;
                                         items[IndexDropzWindow].Visible = true;
                                         RefreshListView();
                                     }
@@ -167,12 +196,17 @@ namespace main
                 items[IndexDropzWindow].CommandSend = "Stop";
             }
         }
+        private void AbortMe(Thread thread)
+        {
+            thread.Abort();
+        }
         private void ShowClose(object sender, RoutedEventArgs e)
         {
             Button b = sender as Button;
             StackPanel s = b.Parent as StackPanel;
             string Uid = s.Uid;
             int IndexDropzWindow = items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
+            items[IndexDropzWindow].ButtonReady = false;
             if (items[IndexDropzWindow].Visible)
             {
                 items[IndexDropzWindow].CommandSend = "Hide";
@@ -183,19 +217,20 @@ namespace main
             }
         }
 
-        private void AutoClaim(object sender, RoutedEventArgs e)
+        private void Auto(object sender, RoutedEventArgs e)
         {
             Button b = sender as Button;
             StackPanel s = b.Parent as StackPanel;
             string Uid = s.Uid;
             int IndexDropzWindow = items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
-            if (!items[IndexDropzWindow].AutoClaimRunning)
+            items[IndexDropzWindow].ButtonReady = false;
+            if (!items[IndexDropzWindow].AutoRunning)
             {
-                items[IndexDropzWindow].CommandSend = "AutoClaim";
+                items[IndexDropzWindow].CommandSend = "Auto";
             }
             else
             {
-                items[IndexDropzWindow].CommandSend = "StopAutoClaim";
+                items[IndexDropzWindow].CommandSend = "StopAuto";
             }
         }
         private void RefreshListView()
@@ -231,7 +266,10 @@ namespace main
                 string[] itemList = File.ReadAllLines(System.AppDomain.CurrentDomain.BaseDirectory + "//configs");
                 for (int a = 0; a < itemList.Length; a++)
                 {
-                    items.Add(JsonConvert.DeserializeObject<DropzWindow>(itemList[a]));
+                    DropzWindow currentItem = JsonConvert.DeserializeObject<DropzWindow>(itemList[a]);
+                    currentItem.Start = false;
+                    currentItem.AutoRunning = false;
+                    items.Add(currentItem);
                 }
             }
             catch
@@ -251,13 +289,16 @@ namespace main
             StackPanel s = b.Parent as StackPanel;
             string Uid = s.Uid;
             int IndexDropzWindow = items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
-            try
+            if (!items[IndexDropzWindow].Start)
             {
-                Directory.Delete(System.AppDomain.CurrentDomain.BaseDirectory + "//CacheCef//" + Uid.ToString(), true);
+                try
+                {
+                    Directory.Delete(System.AppDomain.CurrentDomain.BaseDirectory + "//CacheCef//" + Uid.ToString(), true);
+                }
+                catch { }
+                items.Remove(items[IndexDropzWindow]);
+                RefreshListView();
             }
-            catch { }
-            items.Remove(items[IndexDropzWindow]);
-            RefreshListView();
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
@@ -280,9 +321,23 @@ namespace main
             About window = new About();
             window.Show();
         }
+
+        private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                DragMove();
+
+        }
+
+        private void Exit(object sender, RoutedEventArgs e)
+        {
+            SaveConfigs();
+            Environment.Exit(0);
+        }
     }
     public class Pipe
     {
+        public static bool PipeIsBusy;
         //public void Send(NamedPipeServerStream sender, string content)
         //{
         //    var data = GetBytes(content);
@@ -290,9 +345,18 @@ namespace main
         //}
         public string SendAndReceive(NamedPipeServerStream sender,string content)
         {
-            var data = GetBytes(content);
-            sender.Write(data, 0, data.Length);
-            return Read(sender);
+            string result = null;
+            if (sender.IsConnected)
+            {
+                try
+                {
+                    var data = GetBytes(content);
+                    sender.Write(data, 0, data.Length);
+                    result = Read(sender);
+                }
+                catch { }
+            }
+            return result;
         }
         public void Disconnect(NamedPipeServerStream sender)
         {
@@ -335,14 +399,13 @@ namespace main
     {
         public int Id { get; set; }
         public string Description { get; set; }
+        public string Script { get; set; }
         public string Status { get; set; }
-        public bool AutoClaimRunning { get; set; }
-        public string Balance { get; set; }
+        public bool AutoRunning { get; set; }
+        public string Response { get; set; }
         public string Action { get; set; }
         public bool Start { get; set; }
-        //public Thread Thread { get; set; }
         public int IdProcess { get; set; }
-        //public NamedPipeServerStream ServerSender { get; set; }
         public string CommandSend { get; set; }
         public string DataReceived { get; set; }
         public string UserAgent { get; set; }
@@ -350,10 +413,12 @@ namespace main
         public string Port { get; set; }
         public bool Visible { get; set; }
         public ProxyType Proxytype { get; set; }
-        public bool Hcaptcha { get; set; }
-        public int AmountWithdraw { get; set; }
+        public bool Captcha { get; set; }
         public int Width { get; set; }
         public int Height { get; set; }
+        public bool ButtonReady { get; set; }
+        public bool HidePopup { get; set; }
+        public int DelayClosePopup { get; set; }
     }
     public enum ProxyType
     {

@@ -17,21 +17,18 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Window.Resources>
-    <Grid MouseDown="Grid_MouseDown" Margin="10,10,0,10">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="332*"/>
-            <ColumnDefinition Width="9*"/>
-            <ColumnDefinition Width="0*"/>
-        </Grid.ColumnDefinitions>
-        <Label Content="Dropz Tool version 1.0.0" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="137"/>
-        <Label Content="Developed by s1abmmo" HorizontalAlignment="Left" Margin="10,36,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="139"/>
-        <Label Content="Theo dõi ở topic MMO4ME" HorizontalAlignment="Left" Margin="10,69,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="154"/>
+    <Border BorderBrush="#55246c" BorderThickness="0.8" CornerRadius="3">
+        <Grid Background="Transparent" MouseDown="Grid_MouseDown" Margin="10,10,0,10">
+            <Label Content="Dropz Tool version 1.1.0" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="137"/>
+            <Label Content="Developed by s1abmmo" HorizontalAlignment="Left" Margin="10,36,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="139"/>
+            <Label Content="Theo dõi ở topic MMO4ME" HorizontalAlignment="Left" Margin="10,69,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="154"/>
 
-        <TextBlock Margin="30,95,0,0" Height="18" VerticalAlignment="Top" HorizontalAlignment="Left" Width="292">           
+            <TextBlock Margin="30,95,0,0" Height="18" VerticalAlignment="Top" HorizontalAlignment="Left" Width="292">           
             <Hyperlink NavigateUri="https://mmo4me.com/threads/dropz-tool.419094/" RequestNavigate="Hyperlink_RequestNavigate">
                 https://mmo4me.com/threads/dropz-tool.419094/
             </Hyperlink>
-        </TextBlock>
-        <Button Content="Close" Style="{StaticResource ButtonBlue}" Margin="247,134,10,10" Click="Button_Click"/>
-    </Grid>
+            </TextBlock>
+            <Button Content="Close" Style="{StaticResource ButtonBlue}" Margin="247,134,10,10" Click="Button_Click"/>
+        </Grid>
+    </Border>
 </Window>

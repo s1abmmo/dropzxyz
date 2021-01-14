@@ -89,33 +89,46 @@ namespace dropzwindow
             {
                 return "OK";
             }
-            else if (data == "AutoClaim")
+            else if (data == "Auto")
             {
                 bool threadalive = false;
                 try
                 {
-                    if (InfomationStartup.AutoClaimThread.IsAlive)
+                    if (InfomationStartup.AutoThread.IsAlive)
                         threadalive = true;
                 }
                 catch { }
                 if (!threadalive)
                 {
-                    InfomationStartup.AutoClaimThread = new Thread(() =>
+                    InfomationStartup.AutoThread = new Thread(() =>
                         {
-                            AutoClaim();
+                            try
+                            {
+                                Auto();
+                            }
+                            catch (Exception e){
+                                InfomationStartup.Response = "Auto Error";
+                                try
+                                {
+                                    File.AppendAllText(Application.StartupPath + "//logs.txt", DateTime.Now.ToString()+":"+ e.Message+Environment.NewLine);
+                                }
+                                catch {
+                                    try { File.WriteAllText(Application.StartupPath + "//logs.txt", DateTime.Now.ToString() + ":" + e.Message + Environment.NewLine); } catch { }
+                                }
+                            }
                         });
-                    InfomationStartup.AutoClaimThread.Start();
+                    InfomationStartup.AutoThread.Start();
                     return "OK";
                 }
             }
-            else if (data == "CheckBalance")
+            else if (data == "CheckData")
             {
-                return InfomationStartup.AccountLive.ToString() + "|" + InfomationStartup.Balance + "|" + InfomationStartup.Hcaptcha.ToString();
-            } else if (data == "StopAutoClaim")
+                return InfomationStartup.Response + "|" + InfomationStartup.Captcha.ToString();
+            } else if (data == "StopAuto")
             {
                 try
                 {
-                    InfomationStartup.AutoClaimThread.Abort();
+                    InfomationStartup.AutoThread.Abort();
                 }
                 catch { }
                 return "OK";
@@ -140,97 +153,279 @@ namespace dropzwindow
             }
             return "null";
         }
-        private void AutoClaim()
+        private void Auto()
         {
-            chromeBrowser.Load("https://my.dropz.xyz/site-friends/");
+            InfomationStartup.AutoScript=File.ReadAllLines(Application.StartupPath + "//Auto//" + InfomationStartup.AutoScriptNameFile);
+            while (true)
+            {
+                for(int a=0;a< InfomationStartup.AutoScript.Length; a++)
+                {
+                    string[] AutoScriptChildren = InfomationStartup.AutoScript[a].Split('|');
+                    for (int b=0;b< AutoScriptChildren.Length; b++)
+                    {
+                        //MessageBox.Show(AutoScriptChildren[b]);
+                        if (Regex.IsMatch(AutoScriptChildren[b], "^url"))
+                        {
+                            if (!new HandleAutoCommand().Url(chromeBrowser, AutoScriptChildren[b].Split('\'')[1]))
+                                break;
+                        }else if(Regex.IsMatch(AutoScriptChildren[b], "^checkvisible"))
+                        {
+                            if (!new HandleAutoCommand().CheckVisible(chromeBrowser, AutoScriptChildren[b].Split('\'')[1]))
+                                break;
+                        }else if (Regex.IsMatch(AutoScriptChildren[b], "^click"))
+                        {
+                            if (!new HandleAutoCommand().Click(chromeBrowser, AutoScriptChildren[b].Split('\'')[1]))
+                                break;
+                        }else if(Regex.IsMatch(AutoScriptChildren[b], "^delay"))
+                        {
+                            MatchCollection coll = Regex.Matches(AutoScriptChildren[b], "^delay\\((\\d+)\\)");
+                            int delaytime = Convert.ToInt32(coll[0].Groups[1].Value);
+                            Thread.Sleep(delaytime);
+                        }
+                        else if (Regex.IsMatch(AutoScriptChildren[b], "^getdata"))
+                        {
+                            InfomationStartup.Response = new HandleAutoCommand().EvaluateJavascript(chromeBrowser, AutoScriptChildren[b].Split('\'')[1]);
+                        }
+                        else if (Regex.IsMatch(AutoScriptChildren[b], "^checkcaptcha"))
+                        {
+                            if (new HandleAutoCommand().CheckVisible(chromeBrowser, AutoScriptChildren[b].Split('\'')[1]))
+                            {
+                                InfomationStartup.Captcha = true;
+                                while (true)
+                                {
+                                    Thread.Sleep(1000);
+                                    if (new HandleAutoCommand().CheckVisible(chromeBrowser, AutoScriptChildren[b].Split('\'')[3]))
+                                        break;
+                                }
+                                InfomationStartup.Captcha = false;
+                            }
+                        }
+                        else if(Regex.IsMatch(AutoScriptChildren[b], "^javascript"))
+                        {
+                            new HandleAutoCommand().EvaluateJavascript(chromeBrowser, AutoScriptChildren[b].Split('\'')[1]);
+                        }else if(Regex.IsMatch(AutoScriptChildren[b], "^int"))
+                        {
+                            if (!new HandleAutoCommand().IntCondition(chromeBrowser, AutoScriptChildren[b]))
+                                break;
+                        }else if (Regex.IsMatch(AutoScriptChildren[b], "^string"))
+                        {
+                            if (!new HandleAutoCommand().StringCondition(chromeBrowser, AutoScriptChildren[b]))
+                                break;
+                        }
+                        else if (Regex.IsMatch(AutoScriptChildren[b], "^waitload"))
+                        {
+                            if (!new HandleAutoCommand().WaitPageLoad(chromeBrowser))
+                                break;
+                        }
+                    }
+                }
+            }
+            //chromeBrowser.Load("https://my.dropz.xyz/site-friends/");
+            //while (true)
+            //{
+            //    Thread.Sleep(500);
+            //    if (!chromeBrowser.IsLoading)
+            //        break;
+            //}
+            //while (true)
+            //{
+            //    while (true)
+            //    {
+            //        Thread.Sleep(1000);
+            //        if (!chromeBrowser.IsLoading)
+            //            break;
+            //    }
+            //    string balance = EvaluateScript(chromeBrowser, "document.querySelector('b#display_pending_drops').innerHTML;");
+            //    if (balance == null)
+            //    {
+            //        InfomationStartup.AccountLive = false;
+            //    }
+            //    else
+            //    {
+            //        InfomationStartup.AccountLive = true;
+            //        InfomationStartup.Balance = balance;
+            //    }
+            //    if (int.Parse(InfomationStartup.Balance, NumberStyles.Currency) >InfomationStartup.AmountWithdraw)
+            //    {
+            //        if (CheckVisibleElement(chromeBrowser, "button#payout_bt")){
+            //            chromeBrowser.EvaluateScriptAsync("document.querySelector('button#payout_bt').scrollIntoView();");
+            //            Thread.Sleep(100);
+            //            chromeBrowser.EvaluateScriptAsync("window.scrollBy(0, -"+(InfomationStartup.Height/2).ToString()+");");
+            //            Thread.Sleep(500);
+            //            int x = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('button#payout_bt').getBoundingClientRect().x;")));
+            //            int y = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('button#payout_bt').getBoundingClientRect().y;")));
+            //            chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, false, 1, CefEventFlags.None);
+            //            Thread.Sleep(100);
+            //            chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, true, 1, CefEventFlags.None);
+            //            Thread.Sleep(1000);
+            //            chromeBrowser.Load("https://my.dropz.xyz/site-friends/");
+            //        }
+            //    }else if (CheckVisibleElement(chromeBrowser, "button.swal2-confirm.swal2-styled"))
+            //    {
+            //        chromeBrowser.EvaluateScriptAsync("document.querySelector('button.swal2-confirm.swal2-styled').scrollIntoView();");
+            //        Thread.Sleep(100);
+            //        chromeBrowser.EvaluateScriptAsync("window.scrollBy(0, -" + (InfomationStartup.Height / 2).ToString() + ");");
+            //        Thread.Sleep(500);
+            //        int x = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('button.swal2-confirm.swal2-styled').getBoundingClientRect().x;")));
+            //        int y = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('button.swal2-confirm.swal2-styled').getBoundingClientRect().y;")));
+            //        chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, false, 1, CefEventFlags.None);
+            //        Thread.Sleep(100);
+            //        chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, true, 1, CefEventFlags.None);
+            //    }
+            //    else if (CheckVisibleElement(chromeBrowser, "a.btn.btn-app>i.fa.fa-play") || CheckVisibleElement(chromeBrowser, "a.btn.btn-app>i.fa.fa-repeat"))
+            //    {
+            //        InfomationStartup.Hcaptcha = false;
+            //        chromeBrowser.EvaluateScriptAsync("document.querySelector('a.btn.btn-app').scrollIntoView();");
+            //        Thread.Sleep(100);
+            //        chromeBrowser.EvaluateScriptAsync("window.scrollBy(0, -" + (InfomationStartup.Height / 2).ToString() + ");");
+            //        Thread.Sleep(500);
+            //        int x = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('a.btn.btn-app').getBoundingClientRect().x;")));
+            //        int y = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('a.btn.btn-app').getBoundingClientRect().y;")));
+            //        chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, false, 1, CefEventFlags.None);
+            //        Thread.Sleep(100);
+            //        chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, true, 1, CefEventFlags.None);
+            //    }
+            //    else if (CheckVisibleElement(chromeBrowser, "div.h-captcha"))
+            //    {
+            //        InfomationStartup.Hcaptcha = true;
+            //    }
+            //    else if (!Regex.IsMatch(chromeBrowser.Address, "site-friends"))
+            //    {
+            //        chromeBrowser.Load("https://my.dropz.xyz/site-friends/");
+            //    }
+            //}
+        }
+        //private bool CheckVisibleElement(ChromiumWebBrowser browser, string element)
+        //{
+        //    bool Visible = false;
+        //    int width = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(browser, "document.querySelector('" + element + "').getBoundingClientRect().width;")));
+        //    int height = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(browser, "document.querySelector('" + element + "').getBoundingClientRect().height;")));
+        //    if (width != 0 && height != 0) {
+        //        Visible = true;
+        //    }
+        //    return Visible;
+        //}
+        //public string EvaluateScript(ChromiumWebBrowser browser, string script)
+        //{
+        //    string result = null;
+        //    browser.EvaluateScriptAsync(script).ContinueWith(x =>
+        //    {
+        //        var response = x.Result;
+
+        //        if (response.Success && response.Result != null)
+        //        {
+        //            var startDate = response.Result;
+        //            result = startDate.ToString();
+        //        }
+        //    }).Wait();
+        //    return result;
+        //}
+    }
+
+    public class HandleAutoCommand
+    {
+        public bool Url(ChromiumWebBrowser browser,string url)
+        {
+            browser.Load(url);
             while (true)
             {
                 Thread.Sleep(500);
-                if (!chromeBrowser.IsLoading)
+                if (!browser.IsLoading)
                     break;
             }
-            while (true)
-            {
-                while (true)
-                {
-                    Thread.Sleep(1000);
-                    if (!chromeBrowser.IsLoading)
-                        break;
-                }
-                string balance = EvaluateScript(chromeBrowser, "document.querySelector('b#display_pending_drops').innerHTML;");
-                if (balance == null)
-                {
-                    InfomationStartup.AccountLive = false;
-                }
-                else
-                {
-                    InfomationStartup.AccountLive = true;
-                    InfomationStartup.Balance = balance;
-                }
-                if (int.Parse(InfomationStartup.Balance, NumberStyles.Currency) >InfomationStartup.AmountWithdraw)
-                {
-                    if (CheckVisibleElement(chromeBrowser, "button#payout_bt")){
-                        chromeBrowser.EvaluateScriptAsync("document.querySelector('button#payout_bt').scrollIntoView();");
-                        Thread.Sleep(100);
-                        chromeBrowser.EvaluateScriptAsync("window.scrollBy(0, -"+(InfomationStartup.Height/2).ToString()+");");
-                        Thread.Sleep(500);
-                        int x = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('button#payout_bt').getBoundingClientRect().x;")));
-                        int y = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('button#payout_bt').getBoundingClientRect().y;")));
-                        chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, false, 1, CefEventFlags.None);
-                        Thread.Sleep(100);
-                        chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, true, 1, CefEventFlags.None);
-                        Thread.Sleep(1000);
-                        chromeBrowser.Load("https://my.dropz.xyz/site-friends/");
-                    }
-                }else if (CheckVisibleElement(chromeBrowser, "button.swal2-confirm.swal2-styled"))
-                {
-                    chromeBrowser.EvaluateScriptAsync("document.querySelector('button.swal2-confirm.swal2-styled').scrollIntoView();");
-                    Thread.Sleep(100);
-                    chromeBrowser.EvaluateScriptAsync("window.scrollBy(0, -" + (InfomationStartup.Height / 2).ToString() + ");");
-                    Thread.Sleep(500);
-                    int x = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('button.swal2-confirm.swal2-styled').getBoundingClientRect().x;")));
-                    int y = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('button.swal2-confirm.swal2-styled').getBoundingClientRect().y;")));
-                    chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, false, 1, CefEventFlags.None);
-                    Thread.Sleep(100);
-                    chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, true, 1, CefEventFlags.None);
-                }
-                else if (CheckVisibleElement(chromeBrowser, "a.btn.btn-app>i.fa.fa-play") || CheckVisibleElement(chromeBrowser, "a.btn.btn-app>i.fa.fa-repeat"))
-                {
-                    InfomationStartup.Hcaptcha = false;
-                    chromeBrowser.EvaluateScriptAsync("document.querySelector('a.btn.btn-app').scrollIntoView();");
-                    Thread.Sleep(100);
-                    chromeBrowser.EvaluateScriptAsync("window.scrollBy(0, -" + (InfomationStartup.Height / 2).ToString() + ");");
-                    Thread.Sleep(500);
-                    int x = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('a.btn.btn-app').getBoundingClientRect().x;")));
-                    int y = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(chromeBrowser, "document.querySelector('a.btn.btn-app').getBoundingClientRect().y;")));
-                    chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, false, 1, CefEventFlags.None);
-                    Thread.Sleep(100);
-                    chromeBrowser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, true, 1, CefEventFlags.None);
-                }
-                else if (CheckVisibleElement(chromeBrowser, "div.h-captcha"))
-                {
-                    InfomationStartup.Hcaptcha = true;
-                }
-                else if (!Regex.IsMatch(chromeBrowser.Address, "site-friends"))
-                {
-                    chromeBrowser.Load("https://my.dropz.xyz/site-friends/");
-                }
-            }
+            return true;
         }
-        private bool CheckVisibleElement(ChromiumWebBrowser browser, string element)
+        public bool CheckVisible(ChromiumWebBrowser browser, string element)
         {
             bool Visible = false;
-            int width = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(browser, "document.querySelector('" + element + "').getBoundingClientRect().width;")));
-            int height = Convert.ToInt32(Convert.ToDecimal(EvaluateScript(browser, "document.querySelector('" + element + "').getBoundingClientRect().height;")));
-            if (width != 0 && height != 0) {
+            int width = Convert.ToInt32(Convert.ToDecimal(EvaluateJavascript(browser, "document.querySelector('" + element + "').getBoundingClientRect().width;")));
+            int height = Convert.ToInt32(Convert.ToDecimal(EvaluateJavascript(browser, "document.querySelector('" + element + "').getBoundingClientRect().height;")));
+            if (width != 0 && height != 0)
+            {
                 Visible = true;
             }
             return Visible;
         }
-        public string EvaluateScript(ChromiumWebBrowser browser, string script)
+        public bool Click(ChromiumWebBrowser browser, string element)
+        {
+            bool success = false;
+            if (CheckVisible(browser, element))
+            {
+                browser.EvaluateScriptAsync("document.querySelector('" + element + "').scrollIntoView();");
+                Thread.Sleep(100);
+                browser.EvaluateScriptAsync("window.scrollBy(0, -" + (InfomationStartup.Height / 2).ToString() + ");");
+                Thread.Sleep(500);
+                int x = Convert.ToInt32(Convert.ToDecimal(EvaluateJavascript(browser, "document.querySelector('" + element + "').getBoundingClientRect().x;")));
+                int y = Convert.ToInt32(Convert.ToDecimal(EvaluateJavascript(browser, "document.querySelector('" + element + "').getBoundingClientRect().y;")));
+                if (x != 0 && y != 0)
+                {
+                    browser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, false, 1, CefEventFlags.None);
+                    Thread.Sleep(100);
+                    browser.GetBrowser().GetHost().SendMouseClickEvent(x + 5, y + 5, MouseButtonType.Left, true, 1, CefEventFlags.None);
+                    success = true; 
+                }
+            }
+            return success;
+        }
+        public bool WaitPageLoad(ChromiumWebBrowser browser)
+        {
+            while (true)
+            {
+                Thread.Sleep(500);
+                if (!browser.IsLoading)
+                    break;
+            }
+            return true;
+        }
+        public bool IntCondition(ChromiumWebBrowser browser,string command)
+        {
+            bool ok = false;
+            string[] command1 = command.Split('\'');
+            MatchCollection coll = Regex.Matches(command1[2], "([>=<]{1,2})(\\d+)");
+            string bieuthuc=coll[0].Groups[1].Value;
+            int so = Convert.ToInt32(coll[0].Groups[2].Value);
+            int so2 = Convert.ToInt32(Convert.ToDecimal(EvaluateJavascript(browser, command1[2])));
+            switch (bieuthuc)
+            {
+                case ">":
+                    if (so2 > so)
+                        ok = true;
+                    break;
+                case ">=":
+                    if (so2 >= so)
+                        ok = true;
+                    break;
+                case "==":
+                    if (so2 == so)
+                        ok = true;
+                    break;
+                case "<=":
+                    if (so2 <= so)
+                        ok = true;
+                    break;
+                case "<":
+                    if (so2 < so)
+                        ok = true;
+                    break;
+                default:
+                    break;
+            }
+            return ok;
+        }
+
+        public bool StringCondition(ChromiumWebBrowser browser, string command)
+        {
+            bool ok = false;
+            string[] command1 = command.Split('\'');
+            if (Regex.IsMatch(EvaluateJavascript(browser, command1[1]), command1[3]))
+                ok = true;
+            return ok;
+        }
+
+        public string EvaluateJavascript(ChromiumWebBrowser browser, string javascript)
         {
             string result = null;
-            browser.EvaluateScriptAsync(script).ContinueWith(x =>
+            browser.EvaluateScriptAsync(javascript).ContinueWith(x =>
             {
                 var response = x.Result;
 
@@ -242,7 +437,9 @@ namespace dropzwindow
             }).Wait();
             return result;
         }
+
     }
+
     public class LifespanHandler : ILifeSpanHandler
     {
         //event that receive url popup
@@ -251,10 +448,19 @@ namespace dropzwindow
         bool ILifeSpanHandler.OnBeforePopup(IWebBrowser browserControl, IBrowser browser, IFrame frame, string targetUrl, string targetFrameName, WindowOpenDisposition targetDisposition, bool userGesture, IPopupFeatures popupFeatures, IWindowInfo windowInfo, IBrowserSettings browserSettings, ref bool noJavascriptAccess, out IWebBrowser newBrowser)
         {
             form = new Form();
-            form.Activate();
+            if (InfomationStartup.HidePopup)
+            {
+                form.Activate();
+            }
+            else
+            {
+                form.Width = InfomationStartup.Width;
+                form.Height = InfomationStartup.Height;
+                form.Show();
+            }
             windowInfo.SetAsChild(form.Handle, 0,0,0,0);
-            windowInfo.Width = 500;
-            windowInfo.Height = 500;
+            windowInfo.Width = InfomationStartup.Width;
+            windowInfo.Height = InfomationStartup.Height;
             newBrowser = null;
             return false;
         }
@@ -270,7 +476,7 @@ namespace dropzwindow
             {
                 if (browser.IsPopup)
                 {
-                    Thread.Sleep(7000);
+                    Thread.Sleep(InfomationStartup.TimeDelayClosePopup);
                     browser.CloseBrowser(true);
                 }
             });
@@ -342,17 +548,19 @@ namespace dropzwindow
     {
         public static string IdDropzWindow;
         public static NamedPipeClientStream client;
-        public static string Balance;
-        public static bool AccountLive;
-        public static bool Hcaptcha;
-        public static Thread AutoClaimThread;
+        public static string Response;
+        public static bool Captcha;
+        public static Thread AutoThread;
+        public static string AutoScriptNameFile;
+        public static string[] AutoScript;
         public static string Url;
         public static string UserAgent;
         public static string ProxyType;
         public static string Host;
         public static string Port;
-        public static int AmountWithdraw;
         public static int Width;
         public static int Height;
+        public static bool HidePopup;
+        public static int TimeDelayClosePopup;
     }
 }
