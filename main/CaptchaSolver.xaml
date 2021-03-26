@@ -1,0 +1,40 @@
+﻿<Window x:Class="main.CaptchaSolver"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:main"
+        xmlns:wf="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
+        mc:Ignorable="d"
+        WindowStyle="None"
+        Title="CaptchaSolver"
+        Height="580"
+        Width="400">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary
+                    Source="Dictionary1.xaml">
+                </ResourceDictionary>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Border Background="Transparent" MouseDown="Grid_MouseDown" BorderBrush="#55246c" BorderThickness="0.8" CornerRadius="3" Margin="0,0,0,0">
+        <Grid Margin="0,0,0,0">
+            <Grid Margin="0,0,0,55">
+                <WindowsFormsHost Background="#55246c"  Name="main">
+                    <WindowsFormsHost.Child>
+                        <wf:Panel Name="main"/>
+                    </WindowsFormsHost.Child>
+                </WindowsFormsHost>
+            </Grid>
+            <Grid Height="55" VerticalAlignment="Bottom">
+                <Button Style="{StaticResource CaptchaSolverRunning}" Margin="0,0,90,10" Click="Button_Click" RenderTransformOrigin="0.547,0.73" Height="37" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75"/>
+                <CheckBox IsChecked="{Binding CheckCaptchaRunning}" Unchecked="CheckBox_Unchecked" Checked="CheckBox_Checked" Content="Auto Show Captcha" Margin="90,0,0,30" VerticalAlignment="Bottom" HorizontalAlignment="Left"></CheckBox>
+                <Button Content="Next" Margin="0,0,10,10" Style="{StaticResource ButtonBlue}" Click="Button_Click_1" RenderTransformOrigin="0.547,0.73" Height="37" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="75"/>
+                <Button Content="Close" Margin="10,0,0,10" Style="{StaticResource ButtonBlue}" Click="Button_Click_2"  RenderTransformOrigin="0.547,0.73" Height="37" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="75"/>
+            </Grid>
+
+        </Grid>
+    </Border>
+</Window>

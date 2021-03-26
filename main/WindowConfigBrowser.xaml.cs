@@ -24,7 +24,7 @@ namespace main
         {
             IndexDropzWindow = IndexDropzWindow1;
             InitializeComponent();
-            this.DataContext = MainWindow.items[IndexDropzWindow];
+            this.DataContext = ListItem.ListItem.items[IndexDropzWindow].Setting;
             //MainWindow.items[IndexDropzWindow].Proxytype = ProxyType.None;
         }
 
@@ -48,28 +48,28 @@ namespace main
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            MainWindow.items[IndexDropzWindow].UserAgent = TextBoxUserAgent.Text;
-            MainWindow.items[IndexDropzWindow].Host = Host.Text;
-            MainWindow.items[IndexDropzWindow].Port = Port.Text;
-            MainWindow.items[IndexDropzWindow].Width = Convert.ToInt32(width.Text);
-            MainWindow.items[IndexDropzWindow].Height = Convert.ToInt32(height.Text);
+            ListItem.ListItem.items[IndexDropzWindow].Setting.UserAgent = TextBoxUserAgent.Text;
+            ListItem.ListItem.items[IndexDropzWindow].Setting.Host = Host.Text;
+            ListItem.ListItem.items[IndexDropzWindow].Setting.Port =Convert.ToInt32(Port.Text);
+            ListItem.ListItem.items[IndexDropzWindow].Setting.Width = Convert.ToInt32(width.Text);
+            ListItem.ListItem.items[IndexDropzWindow].Setting.Height = Convert.ToInt32(height.Text);
             if (None.IsChecked.Value)
             {
-                MainWindow.items[IndexDropzWindow].Proxytype = ProxyType.none;
+                ListItem.ListItem.items[IndexDropzWindow].Setting.Proxytype = ProxyType.none;
             }
             else if (Socks5.IsChecked.Value)
             {
-                MainWindow.items[IndexDropzWindow].Proxytype = ProxyType.socks5;
+                ListItem.ListItem.items[IndexDropzWindow].Setting.Proxytype = ProxyType.socks5;
             }
             if (hidepopup.IsChecked.Value)
             {
-                MainWindow.items[IndexDropzWindow].HidePopup = true;
+                ListItem.ListItem.items[IndexDropzWindow].Setting.HidePopup = true;
             }
             else
             {
-                MainWindow.items[IndexDropzWindow].HidePopup = false;
+                ListItem.ListItem.items[IndexDropzWindow].Setting.HidePopup = false;
             }
-            MainWindow.items[IndexDropzWindow].DelayClosePopup = Convert.ToInt32(delayclosepopup.Text);
+            ListItem.ListItem.items[IndexDropzWindow].Setting.DelayClosePopup = Convert.ToInt32(delayclosepopup.Text);
             this.Close();
         }
 
@@ -94,6 +94,7 @@ namespace main
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
         {
+
             return value?.Equals(parameter);
         }
 

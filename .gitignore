@@ -4,3 +4,9 @@ main/bin/*
 main/obj/*
 .vs/*
 packages/*
+ctc/bin/*
+ctc/obj/*
+ClassLibrary1/bin/*
+ClassLibrary1/obj/*
+Getzendotcash/bin/*
+Getzendotcash/obj/*

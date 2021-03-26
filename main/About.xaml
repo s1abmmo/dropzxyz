@@ -19,7 +19,7 @@
     </Window.Resources>
     <Border BorderBrush="#55246c" BorderThickness="0.8" CornerRadius="3">
         <Grid Background="Transparent" MouseDown="Grid_MouseDown" Margin="10,10,0,10">
-            <Label Content="Dropz Tool version 1.1.0" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="137"/>
+            <Label Content="Dropz Tool version 1.1.1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="137"/>
             <Label Content="Developed by s1abmmo" HorizontalAlignment="Left" Margin="10,36,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="139"/>
             <Label Content="Theo dõi ở topic MMO4ME" HorizontalAlignment="Left" Margin="10,69,0,0" VerticalAlignment="Top" RenderTransformOrigin="-2.026,-0.692" Height="26" Width="154"/>
 

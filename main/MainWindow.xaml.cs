@@ -17,6 +17,8 @@ using System.IO.Pipes;
 using System.Text.RegularExpressions;
 using System.IO;
 using Newtonsoft.Json;
+using System.Runtime.InteropServices;
+using main.Config;
 
 namespace main
 {
@@ -28,31 +30,53 @@ namespace main
         public MainWindow()
         {
             InitializeComponent();
-            LoadConfigs();
-            lvUsers.ItemsSource = items;
+            captchasolverstatus = new CaptchaSolverStatus();
+            main.Config.Config.LoadConfigs();
+            lvUsers.ItemsSource =ListItem.ListItem.items;
             lvUsers.Items.Refresh();
-            DirectoryInfo di = new DirectoryInfo(System.AppDomain.CurrentDomain.BaseDirectory + "\\Auto");
-            bool add = false;
-            foreach (FileInfo file in di.GetFiles("*"))
-            {
-                ComboBox1.Items.Add(file.Name);
-                if (!add) {
-                    ComboBox1.Text = file.Name;
-                    add = true;
-                }
-            }
+
+            main.Config.Config.LoadListScript();
+            this.DataContext = null;
+            this.DataContext = main.Config.Config.config;
         }
-        public static List<DropzWindow> items = new List<DropzWindow>();
+        public static CaptchaSolverStatus captchasolverstatus;
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            for(int a=1; ; a++)
+            for (int a = 1; ; a++)
             {
-                if (!items.Any(r => r.Id == a))
+                if (ListItem.ListItem.items.Find(r => r.Id == a)==null)
                 {
-                    if (ComboBox1.Text != null && ComboBox1.Text != "")
+                    if (main.Config.Config.config.ScriptNameSelected != null && main.Config.Config.config.ScriptNameSelected != "")
                     {
-                        items.Add(new DropzWindow() { Id = a, Description = a.ToString(), Script = ComboBox1.Text, Start = false, Status = "---", UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36", Visible = false, AutoRunning = false, Proxytype = ProxyType.none, Host = null, Port = null, Width = 800, Height = 600, ButtonReady = true ,HidePopup=true,DelayClosePopup=6000});
+                        DropzWindow newprofile = new DropzWindow();
+                        newprofile.Id = a;
+                        newprofile.Description = a.ToString();
+                        newprofile.Start = false;
+                        newprofile.Status = "---";
+                        newprofile.AutoRunning = false;
+                        newprofile.ButtonReady = true;
+                        newprofile.ScriptParameters = new object();
+
+                        Setting newsetting = new Setting();
+                        newsetting.Proxytype = ProxyType.none;
+                        newsetting.Host = "";
+                        newsetting.Port = 0;
+                        newsetting.HidePopup = true;
+                        newsetting.Width = 1000;
+                        newsetting.Height = 500;
+                        newsetting.UserAgent = "";
+                        newsetting.Visible = false;
+                        newsetting.DelayClosePopup = 5;
+                        newprofile.Setting = newsetting;
+
+                        AutoScript autoscript = new AutoScript();
+                        autoscript.Script = main.Config.Config.config.ListScript[main.Config.Config.config.ScriptNameSelected];
+                        autoscript.ScriptName = main.Config.Config.config.ScriptNameSelected;
+                        autoscript.ScriptType = ScriptType.claimtoolcommand;
+                        newprofile.Script = autoscript;
+
+                        ListItem.ListItem.items.Add(newprofile);
                         lvUsers.Items.Refresh();
                     }
                     break;
@@ -60,129 +84,130 @@ namespace main
             }
         }
 
-        private List<Thread> ListThread;
-
         private void StartAndStop(object sender, RoutedEventArgs e)
         {
             Button b = sender as Button;
             StackPanel s = b.Parent as StackPanel;
             string Uid = s.Uid;
-            int IndexDropzWindow = items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
-            items[IndexDropzWindow].ButtonReady = false;
+            int IndexDropzWindow = ListItem.ListItem.items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
+            ListItem.ListItem.items[IndexDropzWindow].ButtonReady = false;
             RefreshListView();
-            //MessageBox.Show(IndexDropzWindow+Uid + items[IndexDropzWindow].Status);
-            //MessageBox.Show(items[IndexDropzWindow].Start.ToString());
-            if (!items[IndexDropzWindow].Start)
+
+            if (!ListItem.ListItem.items[IndexDropzWindow].Start)
             {
                 Thread mainThread = new Thread(() =>
                 {
                     Process p = new Process();
                     p.StartInfo.FileName = System.AppDomain.CurrentDomain.BaseDirectory + "/dropzwindow.exe";
                     string Arguments = Uid + " ";
-                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(items[IndexDropzWindow].UserAgent)) + " ";
-                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(items[IndexDropzWindow].Proxytype.ToString()+"|"+ items[IndexDropzWindow].Host + "|"+ items[IndexDropzWindow].Port)) + " ";
-                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].Width))) + " ";
-                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].Height))) + " ";
-                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].Script))) + " ";
-                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].HidePopup))) + " ";
-                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(Convert.ToString(items[IndexDropzWindow].DelayClosePopup))) + " ";
+                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(JsonConverting.JsonConverting.EncodeJson(ListItem.ListItem.items[IndexDropzWindow].ScriptParameters))) + " ";
+                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(JsonConverting.JsonConverting.EncodeJson(ListItem.ListItem.items[IndexDropzWindow].Script))) + " ";
+                    Arguments += Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(JsonConverting.JsonConverting.EncodeJson(ListItem.ListItem.items[IndexDropzWindow].Setting))) + " ";
                     p.StartInfo.Arguments = Arguments;
-                    //MessageBox.Show(Arguments);
-                    if (!items[IndexDropzWindow].Visible)
+                    if (!ListItem.ListItem.items[IndexDropzWindow].Setting.Visible)
                         p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                     p.Start();
-                    items[IndexDropzWindow].IdProcess = p.Id;
-
+                    ListItem.ListItem.items[IndexDropzWindow].IdProcess = p.Id;
                     NamedPipeServerStream ppsv = new NamedPipeServerStream("dropzwindow" + Uid, PipeDirection.InOut);
                     ppsv.WaitForConnection();
 
-                    if (new Pipe().SendAndReceive(ppsv, "Start")=="OK")
+                    ListItem.ListItem.items[IndexDropzWindow].Hwnd= new IntPtr((int)Convert.ToUInt64(new Pipe.Pipe().SendAndReceive(ppsv, "Start")));
+                    if (ListItem.ListItem.items[IndexDropzWindow].Hwnd!= IntPtr.Zero)
                     {
-                        items[IndexDropzWindow].Start = true;
-                        items[IndexDropzWindow].ButtonReady = true;
+                        ListItem.ListItem.items[IndexDropzWindow].Start = true;
+                        ListItem.ListItem.items[IndexDropzWindow].ButtonReady = true;
                         RefreshListView();
-                        while (items[IndexDropzWindow].Start)
+                        while (ListItem.ListItem.items[IndexDropzWindow].Start)
                         {
                             Thread.Sleep(250);
 
-                            if (items[IndexDropzWindow].CommandSend == null && items[IndexDropzWindow].AutoRunning == true)
+                            if (ListItem.ListItem.items[IndexDropzWindow].CommandSend == null && ListItem.ListItem.items[IndexDropzWindow].AutoRunning == true)
                             {
-                                items[IndexDropzWindow].CommandSend = "CheckData";
+                                ListItem.ListItem.items[IndexDropzWindow].CommandSend = "CheckData";
                             }
 
 
-                            if (items[IndexDropzWindow].CommandSend != null)
+                            if (ListItem.ListItem.items[IndexDropzWindow].CommandSend != null)
                             {
 
-                                items[IndexDropzWindow].DataReceived= new Pipe().SendAndReceive(ppsv, items[IndexDropzWindow].CommandSend);
+                                ListItem.ListItem.items[IndexDropzWindow].DataReceived= new Pipe.Pipe().SendAndReceive(ppsv, ListItem.ListItem.items[IndexDropzWindow].CommandSend);
 
-                                if (items[IndexDropzWindow].CommandSend == "Auto")
+                                if (ListItem.ListItem.items[IndexDropzWindow].CommandSend == "Auto")
                                 {
-                                    if (items[IndexDropzWindow].DataReceived == "OK")
+                                    if (ListItem.ListItem.items[IndexDropzWindow].DataReceived == "OK")
                                     {
-                                        items[IndexDropzWindow].ButtonReady = true;
-                                        items[IndexDropzWindow].AutoRunning = true;
+                                        ListItem.ListItem.items[IndexDropzWindow].ButtonReady = true;
+                                        ListItem.ListItem.items[IndexDropzWindow].AutoRunning = true;
                                         RefreshListView();
                                     }
                                 }
-                                else if (items[IndexDropzWindow].CommandSend == "StopAuto")
+                                else if (ListItem.ListItem.items[IndexDropzWindow].CommandSend == "StopAuto")
                                 {
-                                    if (items[IndexDropzWindow].DataReceived == "OK")
+                                    if (ListItem.ListItem.items[IndexDropzWindow].DataReceived == "OK")
                                     {
-                                        items[IndexDropzWindow].ButtonReady = true;
-                                        items[IndexDropzWindow].AutoRunning = false;
+                                        ListItem.ListItem.items[IndexDropzWindow].ButtonReady = true;
+                                        ListItem.ListItem.items[IndexDropzWindow].AutoRunning = false;
                                         RefreshListView();
                                     }
                                 }
-                                else if (items[IndexDropzWindow].CommandSend == "CheckData")
+                                else if (ListItem.ListItem.items[IndexDropzWindow].CommandSend == "CheckData")
                                 {
-                                    string[] result = items[IndexDropzWindow].DataReceived.Split('|');
-                                    items[IndexDropzWindow].Response = result[0];
-                                    if (Convert.ToBoolean(result[1]) == true)
-                                        items[IndexDropzWindow].Captcha = true;
-                                    else { items[IndexDropzWindow].Captcha = false; }
-                                    RefreshListView();
-                                }else if(items[IndexDropzWindow].CommandSend == "Stop")
+                                    try
+                                    {
+                                        string[] result = ListItem.ListItem.items[IndexDropzWindow].DataReceived.Split('|');
+                                        ListItem.ListItem.items[IndexDropzWindow].Response = result[0];
+                                        if (Convert.ToBoolean(result[1]) == true)
+                                        {
+                                            ListItem.ListItem.items[IndexDropzWindow].Captcha = true;
+                                            ListItem.ListItem.items[IndexDropzWindow].CaptchaTime = DateTime.Now;
+                                        }
+                                        else { ListItem.ListItem.items[IndexDropzWindow].Captcha = false; }
+                                        ListItem.ListItem.items[IndexDropzWindow].ButtonReady = true;
+                                        RefreshListView();
+                                    }
+                                    catch { }
+                                }else if(ListItem.ListItem.items[IndexDropzWindow].CommandSend == "Stop")
                                 {
                                     //MessageBox.Show("stop");
-                                    if (items[IndexDropzWindow].DataReceived == "OK")
+                                    if (ListItem.ListItem.items[IndexDropzWindow].DataReceived == "OK")
                                     {
-                                        items[IndexDropzWindow].ButtonReady = true;
+                                        ListItem.ListItem.items[IndexDropzWindow].ButtonReady = true;
                                         try
                                         {
-                                            Process.GetProcessById(items[IndexDropzWindow].IdProcess).Kill();
-                                            Process.GetProcessById(items[IndexDropzWindow].IdProcess).Dispose();
+                                            Process.GetProcessById(ListItem.ListItem.items[IndexDropzWindow].IdProcess).Kill();
+                                            Process.GetProcessById(ListItem.ListItem.items[IndexDropzWindow].IdProcess).Dispose();
                                         }
                                         catch { }
-                                        new Pipe().Disconnect(ppsv);
-                                        items[IndexDropzWindow].Start = false;
-                                        items[IndexDropzWindow].AutoRunning = false;
-                                        items[IndexDropzWindow].Visible = false;
+                                        new Pipe.Pipe().Disconnect(ppsv);
+                                        ListItem.ListItem.items[IndexDropzWindow].Start = false;
+                                        ListItem.ListItem.items[IndexDropzWindow].AutoRunning = false;
+                                        ListItem.ListItem.items[IndexDropzWindow].Setting.Visible = false;
+                                        ListItem.ListItem.items[IndexDropzWindow].ButtonReady = true;
                                         RefreshListView();
                                     }
                                 }
-                                else if (items[IndexDropzWindow].CommandSend == "Hide")
+                                else if (ListItem.ListItem.items[IndexDropzWindow].CommandSend == "Hide")
                                 {
                                     //MessageBox.Show("stop");
-                                    if (items[IndexDropzWindow].DataReceived == "OK")
+                                    if (ListItem.ListItem.items[IndexDropzWindow].DataReceived == "OK")
                                     {
-                                        items[IndexDropzWindow].ButtonReady = true;
-                                        items[IndexDropzWindow].Visible = false;
+                                        ListItem.ListItem.items[IndexDropzWindow].ButtonReady = true;
+                                        ListItem.ListItem.items[IndexDropzWindow].Setting.Visible = false;
                                         RefreshListView();
                                     }
                                 }
-                                else if (items[IndexDropzWindow].CommandSend == "Show")
+                                else if (ListItem.ListItem.items[IndexDropzWindow].CommandSend == "Show")
                                 {
                                     //MessageBox.Show("stop");
-                                    if (items[IndexDropzWindow].DataReceived == "OK")
+                                    if (ListItem.ListItem.items[IndexDropzWindow].DataReceived == "OK")
                                     {
-                                        items[IndexDropzWindow].ButtonReady = true;
-                                        items[IndexDropzWindow].Visible = true;
+                                        ListItem.ListItem.items[IndexDropzWindow].ButtonReady = true;
+                                        ListItem.ListItem.items[IndexDropzWindow].Setting.Visible = true;
                                         RefreshListView();
                                     }
                                 }
 
-                                items[IndexDropzWindow].CommandSend = null;
+                                ListItem.ListItem.items[IndexDropzWindow].CommandSend = null;
 
                             }
                         }
@@ -193,44 +218,39 @@ namespace main
             }
             else
             {
-                items[IndexDropzWindow].CommandSend = "Stop";
+                ListItem.ListItem.items[IndexDropzWindow].CommandSend = "Stop";
             }
-        }
-        private void AbortMe(Thread thread)
-        {
-            thread.Abort();
         }
         private void ShowClose(object sender, RoutedEventArgs e)
         {
             Button b = sender as Button;
             StackPanel s = b.Parent as StackPanel;
             string Uid = s.Uid;
-            int IndexDropzWindow = items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
-            items[IndexDropzWindow].ButtonReady = false;
-            if (items[IndexDropzWindow].Visible)
+            int IndexDropzWindow = ListItem.ListItem.items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
+            ListItem.ListItem.items[IndexDropzWindow].ButtonReady = false;
+            if (ListItem.ListItem.items[IndexDropzWindow].Setting.Visible)
             {
-                items[IndexDropzWindow].CommandSend = "Hide";
+                ListItem.ListItem.items[IndexDropzWindow].CommandSend = "Hide";
             }
             else
             {
-                items[IndexDropzWindow].CommandSend = "Show";
+                ListItem.ListItem.items[IndexDropzWindow].CommandSend = "Show";
             }
         }
-
         private void Auto(object sender, RoutedEventArgs e)
         {
             Button b = sender as Button;
             StackPanel s = b.Parent as StackPanel;
             string Uid = s.Uid;
-            int IndexDropzWindow = items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
-            items[IndexDropzWindow].ButtonReady = false;
-            if (!items[IndexDropzWindow].AutoRunning)
+            int IndexDropzWindow = ListItem.ListItem.items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
+            ListItem.ListItem.items[IndexDropzWindow].ButtonReady = false;
+            if (!ListItem.ListItem.items[IndexDropzWindow].AutoRunning)
             {
-                items[IndexDropzWindow].CommandSend = "Auto";
+                ListItem.ListItem.items[IndexDropzWindow].CommandSend = "Auto";
             }
             else
             {
-                items[IndexDropzWindow].CommandSend = "StopAuto";
+                ListItem.ListItem.items[IndexDropzWindow].CommandSend = "StopAuto";
             }
         }
         private void RefreshListView()
@@ -240,166 +260,87 @@ namespace main
                 lvUsers.Items.Refresh();
             }));
         }
-        private void Focus()
-        {
-            this.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                this.Focus();
-            }));
-        }
-
-        private void SaveConfigs()
-        {
-            string[] itemList = new string[0];
-            for(int a = 0; a < items.Count; a++)
-            {
-                Array.Resize(ref itemList, itemList.Length + 1);
-                itemList[itemList.Length-1]= JsonConvert.SerializeObject(items[a]);
-            }
-            string configs = String.Join(Environment.NewLine, itemList);
-            File.WriteAllText(System.AppDomain.CurrentDomain.BaseDirectory + "//configs", configs);
-        }
-        private void LoadConfigs()
-        {
-            try
-            {
-                string[] itemList = File.ReadAllLines(System.AppDomain.CurrentDomain.BaseDirectory + "//configs");
-                for (int a = 0; a < itemList.Length; a++)
-                {
-                    DropzWindow currentItem = JsonConvert.DeserializeObject<DropzWindow>(itemList[a]);
-                    currentItem.Start = false;
-                    currentItem.AutoRunning = false;
-                    items.Add(currentItem);
-                }
-            }
-            catch
-            {
-                items = new List<DropzWindow>();
-            }
-        }
         private void Window_Closed(object sender, EventArgs e)
         {
-            SaveConfigs();
+            main.Config.Config.SaveConfigs();
             Environment.Exit(0);
         }
-
         private void Delete(object sender, RoutedEventArgs e)
         {
             Button b = sender as Button;
             StackPanel s = b.Parent as StackPanel;
             string Uid = s.Uid;
-            int IndexDropzWindow = items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
-            if (!items[IndexDropzWindow].Start)
+            int IndexDropzWindow = ListItem.ListItem.items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
+            if (!ListItem.ListItem.items[IndexDropzWindow].Start)
             {
                 try
                 {
                     Directory.Delete(System.AppDomain.CurrentDomain.BaseDirectory + "//CacheCef//" + Uid.ToString(), true);
                 }
                 catch { }
-                items.Remove(items[IndexDropzWindow]);
+                ListItem.ListItem.items.Remove(ListItem.ListItem.items[IndexDropzWindow]);
                 RefreshListView();
             }
         }
-
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Tính năng chưa có");
+            //MessageBox.Show("Tính năng chưa có");
+            CaptchaSolver window = new CaptchaSolver();
+            window.Show();
         }
-
         private void Config(object sender, RoutedEventArgs e)
         {
             Button b = sender as Button;
             StackPanel s = b.Parent as StackPanel;
             string Uid = s.Uid;
-            int IndexDropzWindow = items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
+            int IndexDropzWindow = ListItem.ListItem.items.FindIndex(x => x.Id == Convert.ToInt32(Uid));
             WindowConfigBrowser window = new WindowConfigBrowser(IndexDropzWindow);
             window.Show();
         }
-
         private void About(object sender, RoutedEventArgs e)
         {
             About window = new About();
             window.Show();
         }
-
         private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
                 DragMove();
 
         }
-
         private void Exit(object sender, RoutedEventArgs e)
         {
-            SaveConfigs();
+            main.Config.Config.SaveConfigs();
             Environment.Exit(0);
         }
-    }
-    public class Pipe
-    {
-        public static bool PipeIsBusy;
-        //public void Send(NamedPipeServerStream sender, string content)
-        //{
-        //    var data = GetBytes(content);
-        //    sender.Write(data, 0, data.Length);
-        //}
-        public string SendAndReceive(NamedPipeServerStream sender,string content)
+        private void Button_Click_2(object sender, RoutedEventArgs e)
         {
-            string result = null;
-            if (sender.IsConnected)
-            {
-                try
-                {
-                    var data = GetBytes(content);
-                    sender.Write(data, 0, data.Length);
-                    result = Read(sender);
-                }
-                catch { }
-            }
-            return result;
         }
-        public void Disconnect(NamedPipeServerStream sender)
+        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
         {
-            try
-            {
-                sender.Disconnect();
-                sender.Close();
-                sender.Dispose();
-            }
-            catch { }
+            Regex regex = new Regex("[^0-9]+");
+            e.Handled = regex.IsMatch(e.Text);
         }
-        public static byte[] GetBytes(string str)
+        private void TextBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            str = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str));
-            byte[] bytes = new byte[str.Length * sizeof(char)];
-            System.Buffer.BlockCopy(str.ToCharArray(), 0, bytes, 0, bytes.Length);
-            return bytes;
+            TextBox tb = sender as TextBox;
+            string str = JsonConverting.JsonConverting.PrettyJson(tb.Text);
+            //MessageBox.Show(str);
+            if (str == null || tb.Text == null || tb.Text == "")
+                return;
+            tb.Text = str;
         }
-        public string Read(NamedPipeServerStream sender)
+
+        private void Button_Click_3(object sender, RoutedEventArgs e)
         {
-            var buffer = new byte[1000];
-            if (sender.IsConnected)
-                sender.Read(buffer, 0, 1000);
-            return GetString(buffer);
+
         }
-        public string GetString(byte[] bytes)
-        {
-            char[] chars = new char[bytes.Length / sizeof(char)];
-            System.Buffer.BlockCopy(bytes, 0, chars, 0, bytes.Length);
-            string base64 = Regex.Replace(new string(chars), @"[^a-zA-Z0-9\+\/=]+", string.Empty);
-            string result =Encoding.UTF8.GetString(Convert.FromBase64String(base64));
-            return result;
-        }
-    }
-    public class ListItem
-    {
-        public static List<DropzWindow> items;
     }
     public class DropzWindow
     {
         public int Id { get; set; }
         public string Description { get; set; }
-        public string Script { get; set; }
+        //public string Script { get; set; }
         public string Status { get; set; }
         public bool AutoRunning { get; set; }
         public string Response { get; set; }
@@ -408,21 +349,13 @@ namespace main
         public int IdProcess { get; set; }
         public string CommandSend { get; set; }
         public string DataReceived { get; set; }
-        public string UserAgent { get; set; }
-        public string Host { get; set; }
-        public string Port { get; set; }
-        public bool Visible { get; set; }
-        public ProxyType Proxytype { get; set; }
-        public bool Captcha { get; set; }
-        public int Width { get; set; }
-        public int Height { get; set; }
         public bool ButtonReady { get; set; }
-        public bool HidePopup { get; set; }
-        public int DelayClosePopup { get; set; }
-    }
-    public enum ProxyType
-    {
-        none,
-        socks5
+        public IntPtr Hwnd { get; set; }
+        //public dynamic ProfileConfig { get; set; }
+        public bool Captcha { get; set; }
+        public DateTime CaptchaTime { get; set; }
+        public Setting Setting { get; set; }
+        public AutoScript Script { get; set; }
+        public object ScriptParameters { get; set; }
     }
 }

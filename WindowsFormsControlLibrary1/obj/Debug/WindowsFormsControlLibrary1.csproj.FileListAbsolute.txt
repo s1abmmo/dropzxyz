@@ -1,0 +1,5 @@
+C:\Users\HaiDang\Project\dropzxyz\WindowsFormsControlLibrary1\bin\Debug\WindowsFormsControlLibrary1.dll
+C:\Users\HaiDang\Project\dropzxyz\WindowsFormsControlLibrary1\bin\Debug\WindowsFormsControlLibrary1.pdb
+C:\Users\HaiDang\Project\dropzxyz\WindowsFormsControlLibrary1\obj\Debug\WindowsFormsControlLibrary1.csproj.CoreCompileInputs.cache
+C:\Users\HaiDang\Project\dropzxyz\WindowsFormsControlLibrary1\obj\Debug\WindowsFormsControlLibrary1.dll
+C:\Users\HaiDang\Project\dropzxyz\WindowsFormsControlLibrary1\obj\Debug\WindowsFormsControlLibrary1.pdb

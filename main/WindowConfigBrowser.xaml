@@ -22,29 +22,26 @@
             <Grid.Resources>
                 <local:ComparisonConverter x:Key="ComparisonConverter" />
             </Grid.Resources>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="124*"/>
-                <ColumnDefinition Width="143*"/>
-            </Grid.ColumnDefinitions>
-            <TextBox Name="TextBoxUserAgent" HorizontalAlignment="Left" Height="61" Margin="10,36,0,0" TextWrapping="Wrap" Text="{Binding UserAgent}" VerticalAlignment="Top" Width="249" Grid.ColumnSpan="2" />
+            <TextBox Name="TextBoxUserAgent" HorizontalAlignment="Left" Height="61" Margin="10,36,0,0" TextWrapping="Wrap" Text="{Binding UserAgent}" VerticalAlignment="Top" Width="249" />
             <Label Content="Useragent" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
             <Label Content="Network" HorizontalAlignment="Left" Margin="10,97,0,0" VerticalAlignment="Top"/>
-            <TextBox Name="Host"  IsEnabled="{Binding Proxytype, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ProxyType.socks5}}" HorizontalAlignment="Left" Height="23" Margin="50,126,0,0" TextWrapping="Wrap" Text="{Binding Host}" VerticalAlignment="Top" Width="101" Grid.ColumnSpan="2" TextChanged="Host_TextChanged"/>
-            <TextBox Name="Port" IsEnabled="{Binding Proxytype, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ProxyType.socks5}}" HorizontalAlignment="Left" Height="23" Margin="69,126,0,0" TextWrapping="Wrap" Text="{Binding Port}" VerticalAlignment="Top" Width="57" Grid.Column="1" TextChanged="Port_TextChanged"/>
+            <TextBox Name="Host" HorizontalAlignment="Left" Height="23" Margin="50,126,0,0" TextWrapping="Wrap" Text="{Binding Host}" VerticalAlignment="Top" Width="101" TextChanged="Host_TextChanged" Style="{StaticResource HostPort}"/>
+            <TextBox Name="Port" HorizontalAlignment="Left" Height="23" Margin="193,126,0,0" TextWrapping="Wrap" Text="{Binding Port}" VerticalAlignment="Top" Width="57" TextChanged="Port_TextChanged" Style="{StaticResource HostPort}"/>
             <Label Content="Host"  HorizontalAlignment="Left" Margin="10,123,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.857,0.115"/>
-            <Label Content="Port"  HorizontalAlignment="Left" Margin="32,123,0,0" VerticalAlignment="Top" RenderTransformOrigin="2.158,-0.615" Grid.Column="1"/>
-            <Button Content="Apply" HorizontalAlignment="Left" Margin="106,298,0,0" VerticalAlignment="Top" Width="75" Height="37" Grid.ColumnSpan="2" Style="{StaticResource ButtonBlue}" Click="Button_Click" RenderTransformOrigin="0.547,0.73"/>
-            <Button Content="Close" Margin="60,299,9,10" Grid.Column="1" RenderTransformOrigin="0.467,0.243" Style="{StaticResource ButtonBlue}" Click="Button_Click_1"/>
+            <Label Content="Port"  HorizontalAlignment="Left" Margin="156,123,0,0" VerticalAlignment="Top" RenderTransformOrigin="2.158,-0.615"/>
+            <Button Name="Apply" HorizontalAlignment="Right" Margin="0,0,90,10" VerticalAlignment="Bottom" Width="75" Height="40" Style="{StaticResource ApplyButton}" Click="Button_Click" RenderTransformOrigin="0.547,0.73" Grid.RowSpan="2"/>
+            <Button Content="Close" Margin="0,0,10,10" HorizontalAlignment="Right" RenderTransformOrigin="0.467,0.243" Style="{StaticResource ButtonBlue}" Click="Button_Click_1" Height="40" Width="75" VerticalAlignment="Bottom" Grid.RowSpan="2"/>
             <RadioButton Name="None" Content="none" HorizontalAlignment="Left" Margin="19,154,0,0" VerticalAlignment="Top" IsChecked="{Binding Proxytype, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ProxyType.none}}" Checked="RadioButton_Checked"/>
             <RadioButton Name="Socks5" Content="socks5" HorizontalAlignment="Left" Margin="20,174,0,0" VerticalAlignment="Top" IsChecked="{Binding Proxytype, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ProxyType.socks5}}" RenderTransformOrigin="0.412,-0.667" Checked="Socks5_Checked"/>
+            <RadioButton Name="HttpsProxy" Content="Https proxy" HorizontalAlignment="Left" Margin="100,154,0,0" VerticalAlignment="Top" IsChecked="{Binding Proxytype, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static local:ProxyType.https}}" RenderTransformOrigin="0.412,-0.667" Checked="Socks5_Checked"/>
             <Label Content="Window width" HorizontalAlignment="Left" Margin="15,202,0,0" VerticalAlignment="Top"/>
-            <TextBox Name="width" PreviewTextInput="NumberValidationTextBox" Text="{Binding Width}" HorizontalAlignment="Left" Height="23" Margin="109,205,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="47" Grid.ColumnSpan="2"/>
-            <Label Content="height" Grid.Column="1" HorizontalAlignment="Left" Margin="37,202,0,0" VerticalAlignment="Top"/>
-            <TextBox Name="height" PreviewTextInput="NumberValidationTextBox" Text="{Binding Height}" HorizontalAlignment="Left" Height="23" Margin="86,205,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="47" Grid.Column="1"/>
+            <TextBox Name="width" PreviewTextInput="NumberValidationTextBox" Text="{Binding Width}" HorizontalAlignment="Left" Height="23" Margin="109,205,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="47"/>
+            <Label Content="height" HorizontalAlignment="Left" Margin="156,202,0,0" VerticalAlignment="Top"/>
+            <TextBox Name="height" PreviewTextInput="NumberValidationTextBox" Text="{Binding Height}" HorizontalAlignment="Left" Height="23" Margin="203,205,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="47"/>
             <Label Content="Handle popup" HorizontalAlignment="Left" Margin="15,233,0,0" VerticalAlignment="Top"/>
-            <CheckBox Name="hidepopup" IsChecked="{Binding HidePopup}" Content="Hide pop-up" Margin="19,259,10,70"/>
-            <Label Content="Close after (ms)" HorizontalAlignment="Left" Margin="120,253,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
-            <TextBox Name="delayclosepopup" PreviewTextInput="NumberValidationTextBox" Text="{Binding DelayClosePopup}" HorizontalAlignment="Left" Height="23" Margin="86,256,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="47" Grid.Column="1"/>
+            <CheckBox Name="hidepopup" IsChecked="{Binding HidePopup}" Content="Hide pop-up" Margin="19,259,10,43"/>
+            <Label Content="Close after (ms)" HorizontalAlignment="Left" Margin="163,253,0,0" VerticalAlignment="Top"/>
+            <TextBox Name="delayclosepopup" PreviewTextInput="NumberValidationTextBox" Text="{Binding DelayClosePopup}" HorizontalAlignment="Left" Height="23" Margin="111,256,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="47"/>
         </Grid>
     </Border>
 </Window>
